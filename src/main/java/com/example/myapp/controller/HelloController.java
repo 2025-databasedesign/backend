@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class HelloController {
     @GetMapping("/")
     public String hello() {
-        return "Hello from Local Spring Boot!";
+        return "Hi from Local Spring Boot!";
     }
 }
