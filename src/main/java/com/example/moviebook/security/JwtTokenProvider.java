@@ -3,15 +3,17 @@ package com.example.moviebook.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
-    private final String JWT_SECRET = "yourSecretKey";
-    private final long JWT_EXPIRATION_MS = 3600000; // 1 hour
+    private final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512); // 안전한 키 자동 생성
+    private final long JWT_EXPIRATION_MS = 3600000; // 1시간
 
     public String generateToken(Long userId) {
         Date now = new Date();
@@ -21,13 +23,14 @@ public class JwtTokenProvider {
                 .setSubject(Long.toString(userId))
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, JWT_SECRET)
+                .signWith(secretKey)
                 .compact();
     }
 
     public Long getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(JWT_SECRET)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
 
@@ -36,9 +39,9 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(JWT_SECRET).parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
             return true;
-        } catch (Exception ex) {
+        } catch (Exception e) {
             return false;
         }
     }
