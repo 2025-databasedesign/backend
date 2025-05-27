@@ -10,7 +10,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // 모든 경로 허용
-                .allowedOrigins("*") // React 주소
+                .allowedOrigins("http://localhost:3000", "http://localhost:5173", "http://54.180.117.246") // React 주소
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // 허용 메서드
                 .allowedHeaders("*")
                 .allowCredentials(true);
