@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                         // .requestMatchers("/api/users/login", "/api/users/register").permitAll()
                         // .anyRequest().authenticated()
-                )
+                );
                 // .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
