@@ -24,16 +24,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String token = resolveToken(request);
 
+        // ✅ 토큰이 있고, 유효한 경우만 SecurityContext 설정
         if (token != null && jwtTokenProvider.validateToken(token)) {
             Long userId = jwtTokenProvider.getUserIdFromToken(token);
-
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userId, null, null); // 권한 없이 ID만 전달
-
+                    new UsernamePasswordAuthenticationToken(userId, null, null);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(request, response); // 항상 체인 계속
     }
 
     private String resolveToken(HttpServletRequest request) {
