@@ -1,12 +1,11 @@
 package com.example.moviebook.service;
 
-import com.example.moviebook.dto.ReservationRequestDto;
-import com.example.moviebook.dto.ReservationResponseDto;
-import com.example.moviebook.dto.ReservationUpdateRequestDto;
+import com.example.moviebook.dto.ReservationDto;
 import com.example.moviebook.entity.*;
 import com.example.moviebook.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.time.LocalDateTime;
@@ -15,6 +14,8 @@ import java.util.List;
 @Service
 public class ReservationService {
 
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
     @Autowired
     private SeatRepository seatRepository;
     @Autowired
@@ -25,143 +26,177 @@ public class ReservationService {
     private ReservationSeatRepository reservationSeatRepository;
     @Autowired
     private MovieRepository movieRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private ScheduleRepository scheduleRepository;
 
+    //예매 기능
     @Transactional
-    public ReservationResponseDto reserve(ReservationRequestDto request) {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public ReservationDto reserve(ReservationDto request) {
+        Long userId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보가 없습니다."));
 
-        List<SeatEntity> seats = seatRepository.findAllById(request.getSeatIds());
+        ScheduleEntity schedule = scheduleRepository.findById(request.getScheduleId())
+                .orElseThrow(() -> new IllegalArgumentException("상영 정보를 찾을 수 없습니다."));
+
+        List<SeatEntity> seats = seatRepository.findBySeatNumberInAndTheater_TheaterId(
+                request.getSeatNumbers(), schedule.getTheater().getTheaterId());
 
         for (SeatEntity seat : seats) {
-            if (!"AVAILABLE".equals(seat.getStatus())) {
+            if (reservationSeatRepository.existsByScheduleAndSeat(schedule, seat)) {
                 throw new IllegalStateException("이미 예약된 좌석이 있습니다: " + seat.getSeatNumber());
             }
         }
 
-        for (SeatEntity seat : seats) {
-            seat.setStatus("RESERVED");
-        }
+        int totalPrice = schedule.getPrice() * seats.size();
 
-        // 티켓 생성
         TicketEntity ticket = new TicketEntity();
         ticket.setBookedAt(LocalDateTime.now());
-        ticket.setPrice(request.getPrice());
+        ticket.setPrice(totalPrice);
         ticket.setPaymentStatus("PAID");
         ticket.setIssued(true);
-
-        // ⬇ 요청에 영화 ID가 있다고 가정하고 설정
-        MovieEntity movie = movieRepository.findById(request.getMovieId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 영화가 존재하지 않습니다."));
-        ticket.setMovie(movie);
-
+        ticket.setMovie(schedule.getMovie());
         ticketRepository.save(ticket);
 
-        // 예매 생성
         ReservationEntity reservation = new ReservationEntity();
-        reservation.setUserId(userId);
+        reservation.setUser(user);
         reservation.setTicket(ticket);
         reservation.setReservedAt(LocalDateTime.now());
-        reservation.setTotalPrice(request.getPrice());
+        reservation.setTotalPrice(totalPrice);
         reservation.setPaymentMethod(request.getPaymentMethod());
         reservationRepository.save(reservation);
 
-        // 좌석-예매 연결
         for (SeatEntity seat : seats) {
             ReservationSeatEntity rs = new ReservationSeatEntity();
             rs.setReservation(reservation);
             rs.setSeat(seat);
+            rs.setSchedule(schedule);
             reservationSeatRepository.save(rs);
         }
 
-        return new ReservationResponseDto(
+        for (SeatEntity seat : seats) {
+            String seatKey = "hold:" + schedule.getScheduleId() + ":" + seat.getSeatNumber();
+            redisTemplate.delete(seatKey); // 예매 확정 후 HOLD 해제
+        }
+
+        return new ReservationDto(
                 reservation.getReservationId(),
-                movie.getTitle(),
-                seats.get(0).getTheater().getTheaterName(),
-                seats.stream().map(SeatEntity::getSeatNumber).toList(),
-                reservation.getTotalPrice(),
+                request.getScheduleId(),
+                request.getSeatNumbers(),
+                totalPrice,
                 seats.size(),
-                reservation.getReservedAt()
+                reservation.getReservedAt(),
+                schedule.getMovie().getTitle(),
+                schedule.getTheater().getTheaterName(),
+                request.getPaymentMethod(),
+                null
         );
     }
 
-    public List<ReservationResponseDto> getMyReservations() {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<ReservationEntity> reservations = reservationRepository.findByUserId(userId);
+    // 예매 조회
+    public List<ReservationDto> getMyReservations() {
+        Long userId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보가 없습니다."));
+
+        List<ReservationEntity> reservations = reservationRepository.findByUser(user);
 
         return reservations.stream().map(res -> {
             TicketEntity ticket = res.getTicket();
             String movieTitle = ticket.getMovie().getTitle();
-
             List<ReservationSeatEntity> reservationSeats = reservationSeatRepository.findByReservation(res);
-
             List<String> seatNumbers = reservationSeats.stream()
                     .map(rs -> rs.getSeat().getSeatNumber())
                     .toList();
-
             String theaterName = reservationSeats.stream()
                     .findFirst()
                     .map(rs -> rs.getSeat().getTheater().getTheaterName())
                     .orElse("미정");
 
-            return new ReservationResponseDto(
+            return new ReservationDto(
                     res.getReservationId(),
-                    movieTitle,
-                    theaterName,
+                    reservationSeats.get(0).getSchedule().getScheduleId(),
                     seatNumbers,
                     res.getTotalPrice(),
                     seatNumbers.size(),
-                    res.getReservedAt()
+                    res.getReservedAt(),
+                    movieTitle,
+                    theaterName,
+                    res.getPaymentMethod(),
+                    null
             );
         }).toList();
     }
 
+    // 예매 변경
     @Transactional
-    public ReservationResponseDto updateReservation(Long reservationId, ReservationUpdateRequestDto request) {
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public ReservationDto updateReservation(Long reservationId, ReservationDto request) {
+        Long userId = Long.valueOf(SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
 
         ReservationEntity reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 예매가 존재하지 않습니다."));
 
-        // 로그인한 사용자와 예매 소유자 일치 확인
-        if (!reservation.getUserId().equals(userId)) {
+        if (!reservation.getUser().getId().equals(userId)) {
             throw new SecurityException("본인의 예매만 변경할 수 있습니다.");
         }
 
-        // 기존 좌석 예약 해제
         List<ReservationSeatEntity> oldSeats = reservationSeatRepository.findByReservation(reservation);
-        for (ReservationSeatEntity rs : oldSeats) {
-            SeatEntity seat = rs.getSeat();
-            seat.setStatus("AVAILABLE");
-        }
         reservationSeatRepository.deleteAll(oldSeats);
 
-        // 새 좌석 확인 및 예약
-        List<SeatEntity> newSeats = seatRepository.findAllById(request.getNewSeatIds());
+        List<SeatEntity> newSeats = seatRepository.findBySeatNumberInAndTheater_TheaterId(
+                request.getSeatNumbers(), oldSeats.get(0).getSeat().getTheater().getTheaterId());
+
         for (SeatEntity seat : newSeats) {
-            if (!"AVAILABLE".equals(seat.getStatus())) {
+            if (reservationSeatRepository.existsByScheduleAndSeat(oldSeats.get(0).getSchedule(), seat)) {
                 throw new IllegalStateException("이미 예약된 좌석이 있습니다: " + seat.getSeatNumber());
             }
-            seat.setStatus("RESERVED");
 
             ReservationSeatEntity rs = new ReservationSeatEntity();
             rs.setReservation(reservation);
             rs.setSeat(seat);
+            rs.setSchedule(oldSeats.get(0).getSchedule());
             reservationSeatRepository.save(rs);
         }
 
-        // 예매 변경 (상영시간은 Ticket에 저장한다고 가정)
         TicketEntity ticket = reservation.getTicket();
-        ticket.setBookedAt(request.getNewShowTime()); // 상영시간으로 사용
+        ticket.setBookedAt(request.getNewShowTime());
         ticketRepository.save(ticket);
 
-        return new ReservationResponseDto(
+        return new ReservationDto(
                 reservation.getReservationId(),
-                ticket.getMovie().getTitle(),
-                newSeats.get(0).getTheater().getTheaterName(),
-                newSeats.stream().map(SeatEntity::getSeatNumber).toList(),
+                oldSeats.get(0).getSchedule().getScheduleId(),
+                request.getSeatNumbers(),
                 reservation.getTotalPrice(),
-                newSeats.size(),
-                reservation.getReservedAt()
+                request.getSeatNumbers().size(),
+                reservation.getReservedAt(),
+                ticket.getMovie().getTitle(),
+                oldSeats.get(0).getSeat().getTheater().getTheaterName(),
+                reservation.getPaymentMethod(),
+                request.getNewShowTime()
         );
+    }
+
+    public void cancelReservation(Long reservationId) {
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 예매입니다."));
+
+        List<ReservationSeatEntity> reservedSeats = reservationSeatRepository.findByReservation(reservation);
+
+        for (ReservationSeatEntity rs : reservedSeats) {
+            SeatEntity seat = rs.getSeat();
+            seat.setStatus("AVAILABLE");
+            reservationSeatRepository.delete(rs);
+        }
+
+        TicketEntity ticket = reservation.getTicket();
+        if (ticket != null) {
+            reservation.setTicket(null);
+            reservationRepository.save(reservation);
+            ticketRepository.delete(ticket);
+        }
+
+        reservationRepository.delete(reservation);
     }
 }

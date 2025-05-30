@@ -18,8 +18,9 @@ public class ReservationEntity {
     @Column(name = "RESERVATION_ID")
     private Long reservationId;
 
-    @Column(name = "USER_ID")
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "USER_ID")
+    private UserEntity user;
 
     @OneToOne
     @JoinColumn(name = "TICKET_ID")
@@ -30,6 +31,10 @@ public class ReservationEntity {
 
     @Column(name = "TOTAL_PRICE")
     private int totalPrice;
+
+    @ManyToOne
+    @JoinColumn(name = "SCHEDULE_ID")
+    private ScheduleEntity schedule;
 
     @Column(name = "PAYMENT_METHOD")
     private String paymentMethod; // 예: CREDIT_CARD, KAKAO_PAY

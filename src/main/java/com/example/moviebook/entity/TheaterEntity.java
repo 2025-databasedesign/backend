@@ -25,8 +25,10 @@ public class TheaterEntity {
     @Column(name = "TOTAL_SEATS")
     private int totalSeats;
 
-    @Column(name = "SCREEN_TYPE")
-    private String screenType; // 예: IMAX, Dolby
+    @ElementCollection
+    @CollectionTable(name = "THEATER_SCREEN_TYPE", joinColumns = @JoinColumn(name = "THEATER_ID"))
+    @Column(name = "SCREEN_TYPE_NAME")
+    private List<String> screenTypes = new ArrayList<>();
 
     @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL)
     private List<SeatEntity> seats = new ArrayList<>();

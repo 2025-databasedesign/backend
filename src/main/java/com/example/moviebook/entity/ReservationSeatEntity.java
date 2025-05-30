@@ -23,4 +23,8 @@ public class ReservationSeatEntity {
     @ManyToOne
     @JoinColumn(name = "SEAT_ID")
     private SeatEntity seat;
+
+    @ManyToOne
+    @JoinColumn(name = "SCHEDULE_ID")
+    private ScheduleEntity schedule;
 }

@@ -3,9 +3,14 @@ package com.example.moviebook.controller;
 import com.example.moviebook.dto.UserDto;
 import com.example.moviebook.util.ApiResponse;
 import com.example.moviebook.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.redis.core.RedisTemplate;
+import com.example.moviebook.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/users")
@@ -13,8 +18,12 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
-    //회원가입
+    // 회원가입
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserDto>> registerUser(@RequestBody UserDto userDto) {
         UserDto registeredUser = userService.registerUser(userDto, userDto.getPassword());
@@ -33,6 +42,19 @@ public class UserController {
         }
     }
 
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+        String token = jwtTokenProvider.resolveToken(request);
+
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            long remainingTime = jwtTokenProvider.getRemainingTime(token); // 남은 유효시간 계산
+            redisTemplate.opsForValue().set(token, "logout", remainingTime, TimeUnit.MILLISECONDS);
+        }
+
+        return ResponseEntity.ok(new ApiResponse<>(true, "로그아웃 되었습니다.", null));
+    }
+
     // 사용자 정보 조회 (이메일로)
     @GetMapping("/{email}")
     public ResponseEntity<ApiResponse<UserDto>> getUserByEmail(@PathVariable String email) {
@@ -47,7 +69,7 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>(true, "사용자 정보 업데이트 성공", updatedUser));
     }
 
-    //아이디 찾기
+    // 아이디 찾기
     @GetMapping("/find-id")
     public ResponseEntity<ApiResponse<String>> findEmail(
             @RequestParam String name,
@@ -69,7 +91,7 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>(true, "비밀번호 재설정 성공", null));
     }
 
-    //계정삭제
+    // 계정삭제
     @DeleteMapping("/{email}")
     public ResponseEntity<ApiResponse<Void>> deleteUserByEmail(@PathVariable String email) {
         try {

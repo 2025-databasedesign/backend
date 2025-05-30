@@ -38,8 +38,8 @@ public class MovieEntity {
     @Column(name = "ACTOR_NAME")
     private List<String> actors = new ArrayList<>();
 
-    @Column(name = "RATING")
-    private String rating;
+    @Column(name = "GRADE")
+    private String grade;
 
     @ElementCollection
     @CollectionTable(name = "MOVIE_FORMAT", joinColumns = @JoinColumn(name = "MOVIE_ID"))

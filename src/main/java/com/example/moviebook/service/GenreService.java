@@ -14,6 +14,7 @@ public class GenreService {
     @Autowired
     private GenreRepository genreRepository;
 
+    // 장르 등록
     public GenreDto registerGenre(GenreDto dto) {
         if(genreRepository.existsByGenreName(dto.getGenreName())) {
             throw new IllegalArgumentException("이미 존재하는 장르입니다.");
@@ -27,7 +28,8 @@ public class GenreService {
                 savedGenre.getGenreId(),
                 savedGenre.getGenreName());
     }
-
+    
+    // 장르 조회
     public List<GenreEntity> getAllGenres() {
         return genreRepository.findAll();
     }
