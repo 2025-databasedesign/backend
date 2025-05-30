@@ -34,13 +34,13 @@ public class MovieController {
         return ResponseEntity.ok(new ApiResponse<>(true, "영화 삭제 성공", null));
     }
 
-    @GetMapping("/ratings")
+    @GetMapping("/grades")
     public ResponseEntity<ApiResponse<List<String>>> getAllRatings() {
-        return ResponseEntity.ok(new ApiResponse<>(true, "등급 목록 조회", movieService.getAllRatings()));
+        return ResponseEntity.ok(new ApiResponse<>(true, "등급 목록 조회", movieService.getAllGrades()));
     }
 
-    @GetMapping("/rating/{rating}")
-    public ResponseEntity<ApiResponse<List<MovieDto>>> getMoviesByRating(@PathVariable String rating) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "등급별 영화 조회", movieService.getMoviesByRating(rating)));
+    @GetMapping("/grade/{grade}")
+    public ResponseEntity<ApiResponse<List<MovieDto>>> getMoviesByRating(@PathVariable String grade) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "등급별 영화 조회", movieService.getMoviesByGrade(grade)));
     }
 }

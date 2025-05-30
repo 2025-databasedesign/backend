@@ -12,8 +12,8 @@ public interface MovieRepository extends JpaRepository<MovieEntity, Long> {
 
     boolean existsByTitle(String title);
 
-    List<MovieEntity> findByRating(String rating);
+    List<MovieEntity> findByGrade(String grade);
 
-    @Query("SELECT DISTINCT m.rating FROM MovieEntity m WHERE m.rating IS NOT NULL")
-    List<String> findDistinctRatings();
+    @Query("SELECT DISTINCT m.grade FROM MovieEntity m WHERE m.grade IS NOT NULL")
+    List<String> findDistinctGrades();
 }

@@ -17,7 +17,7 @@ public class MovieDto {
     private LocalDate releaseDate;
     private String director;
     private List<String> actors;
-    private String rating;
+    private String grade;
     private List<String> formats;
     private List<Long> genreIds; //등록용
     private List<String> genreNames; //조회용
