@@ -27,13 +27,12 @@ public class MovieService {
         }
         
         MovieEntity entity = new MovieEntity();
-
         entity.setTitle(dto.getTitle());
         entity.setRunningTime(dto.getRunningTime());
         entity.setReleaseDate(dto.getReleaseDate());
         entity.setDirector(dto.getDirector());
         entity.setActors(dto.getActors());
-        entity.setGrade(dto.getGrade());
+        entity.setRating(dto.getRating());
         entity.setFormats(dto.getFormats());
 
         if (dto.getGenreIds() != null && !dto.getGenreIds().isEmpty()) {
@@ -47,7 +46,6 @@ public class MovieService {
         return dto;
     }
 
-    // 모든 영화 조회
     public List<MovieDto> getAllMovies() {
         return movieRepository.findAll().stream().map(movie -> {
             List<Long> genreIds = movie.getGenres().stream()
@@ -65,7 +63,7 @@ public class MovieService {
                     movie.getReleaseDate(),
                     movie.getDirector(),
                     movie.getActors(),
-                    movie.getGrade(),
+                    movie.getRating(),
                     movie.getFormats(),
                     genreIds,
                     genreNames
@@ -73,19 +71,16 @@ public class MovieService {
         }).collect(Collectors.toList());
     }
 
-    // 영화 삭제
     public void deleteMovie(Long id) {
         movieRepository.deleteById(id);
     }
 
-    // 등급 조회
-    public List<String> getAllGrades() {
-        return movieRepository.findDistinctGrades();
+    public List<String> getAllRatings() {
+        return movieRepository.findDistinctRatings();
     }
 
-    //등급별 영화 조회
-    public List<MovieDto> getMoviesByGrade(String grade) {
-        return movieRepository.findByGrade(grade).stream().map(m -> {
+    public List<MovieDto> getMoviesByRating(String rating) {
+        return movieRepository.findByRating(rating).stream().map(m -> {
             List<Long> genreIds = m.getGenres().stream()
                     .map(GenreEntity::getGenreId)
                     .collect(Collectors.toList());
@@ -101,7 +96,7 @@ public class MovieService {
                     m.getReleaseDate(),
                     m.getDirector(),
                     m.getActors(),
-                    m.getGrade(),
+                    m.getRating(),
                     m.getFormats(),
                     genreIds,
                     genreNames
