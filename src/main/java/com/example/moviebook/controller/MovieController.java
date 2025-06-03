@@ -34,12 +34,12 @@ public class MovieController {
     }
 
     @GetMapping("/grades")
-    public ResponseEntity<ApiResponse<List<String>>> getAllRatings() {
+    public ResponseEntity<ApiResponse<List<String>>> getAllGrades() {
         return ResponseEntity.ok(new ApiResponse<>(true, "등급 목록 조회", movieService.getAllGrades()));
     }
 
     @GetMapping("/grade/{grade}")
-    public ResponseEntity<ApiResponse<List<MovieDto>>> getMoviesByRating(@PathVariable String grade) {
+    public ResponseEntity<ApiResponse<List<MovieDto>>> getMoviesByGrade(@PathVariable String grade) {
         return ResponseEntity.ok(new ApiResponse<>(true, "등급별 영화 조회", movieService.getMoviesByGrade(grade)));
     }
 }

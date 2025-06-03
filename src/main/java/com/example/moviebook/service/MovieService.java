@@ -32,7 +32,7 @@ public class MovieService {
         entity.setReleaseDate(dto.getReleaseDate());
         entity.setDirector(dto.getDirector());
         entity.setActors(dto.getActors());
-        entity.setRating(dto.getRating());
+        entity.setGrade(dto.getGrade());
         entity.setFormats(dto.getFormats());
 
         if (dto.getGenreIds() != null && !dto.getGenreIds().isEmpty()) {
@@ -63,7 +63,7 @@ public class MovieService {
                     movie.getReleaseDate(),
                     movie.getDirector(),
                     movie.getActors(),
-                    movie.getRating(),
+                    movie.getGrade(),
                     movie.getFormats(),
                     genreIds,
                     genreNames
@@ -75,12 +75,12 @@ public class MovieService {
         movieRepository.deleteById(id);
     }
 
-    public List<String> getAllRatings() {
-        return movieRepository.findDistinctRatings();
+    public List<String> getAllGrades() {
+        return movieRepository.findDistinctGrades();
     }
 
-    public List<MovieDto> getMoviesByRating(String rating) {
-        return movieRepository.findByRating(rating).stream().map(m -> {
+    public List<MovieDto> getMoviesByGrade(String rating) {
+        return movieRepository.findByGrade(rating).stream().map(m -> {
             List<Long> genreIds = m.getGenres().stream()
                     .map(GenreEntity::getGenreId)
                     .collect(Collectors.toList());
@@ -96,7 +96,7 @@ public class MovieService {
                     m.getReleaseDate(),
                     m.getDirector(),
                     m.getActors(),
-                    m.getRating(),
+                    m.getGrade(),
                     m.getFormats(),
                     genreIds,
                     genreNames
