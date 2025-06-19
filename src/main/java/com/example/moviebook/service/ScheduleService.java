@@ -31,9 +31,6 @@ public class ScheduleService {
     @Autowired
     private ReservationSeatRepository reservationSeatRepository;
 
-    /**
-     * 등록 요청된 Dto를 ScheduleEntity로 변환 후 저장
-     */
     public void registerSchedule(ScheduleDto dto) {
         List<ScheduleEntity> result = new ArrayList<>();
 
@@ -46,21 +43,25 @@ public class ScheduleService {
                         .orElseThrow(() -> new IllegalArgumentException("극장 ID 오류: " + theaterDto.getTheaterId()));
 
                 List<String> startList = theaterDto.getStartTimes();
-                List<String> endList = theaterDto.getEndTimes();
+                if (startList == null || startList.isEmpty()) continue;
 
-                for (int i = 0; i < startList.size(); i++) {
-                    String startTimeStr = dto.getDate() + "T" + startList.get(i);
-                    LocalDateTime start = LocalDateTime.parse(startTimeStr);
+                String firstStartTimeStr = dto.getDate() + "T" + startList.get(0);
+                LocalDateTime currentStart = LocalDateTime.parse(firstStartTimeStr);
 
+                int runningTime = movie.getRunningTime();
+                int intervalMinutes = runningTime + 30;
+                LocalDateTime limitTime = LocalDateTime.parse(dto.getDate() + "T23:00");
+
+                while (currentStart.isBefore(limitTime)) {
                     ScheduleEntity schedule = new ScheduleEntity();
                     schedule.setMovie(movie);
-                    schedule.setTheater(theater);
-                    schedule.setStartTime(start);
                     schedule.setFormat(theaterDto.getFormat());
-                    schedule.setSubDub(theaterDto.getSubDub());
-                    schedule.setPrice(10000); // 기본값 또는 정책 적용
+                    schedule.setTheater(theater);
+                    schedule.setStartTime(currentStart);
+                    schedule.setSubDub(theaterDto.getSubDub());  // 자막/더빙은 회차마다 다를 수 있음
 
                     result.add(schedule);
+                    currentStart = currentStart.plusMinutes(intervalMinutes);
                 }
             }
         }
@@ -68,9 +69,6 @@ public class ScheduleService {
         scheduleRepository.saveAll(result);
     }
 
-    /**
-     * 지정한 날짜의 모든 상영 스케줄 조회 후 Dto로 변환
-     */
     public ScheduleDto getScheduleByDate(String dateStr) {
         LocalDate date = LocalDate.parse(dateStr);
         List<ScheduleEntity> schedules = scheduleRepository.findByStartTimeBetween(
@@ -84,7 +82,6 @@ public class ScheduleService {
         ScheduleDto dto = new ScheduleDto();
         dto.setDate(date);
 
-        // 예약 좌석 수 미리 조회
         Map<Long, Long> reservedSeatMap = reservationSeatRepository
                 .countReservedSeatsGrouped(scheduleEntities)
                 .stream()
@@ -117,7 +114,7 @@ public class ScheduleService {
                 ScheduleDto.TheaterSchedule theaterSchedule = new ScheduleDto.TheaterSchedule();
                 theaterSchedule.setTheaterId(String.valueOf(theater.getTheaterId()));
                 theaterSchedule.setTheaterName(theater.getTheaterName());
-                theaterSchedule.setFormat(scheduleList.get(0).getFormat());
+                theaterSchedule.setFormat(scheduleList.get(0).getFormat());// ← 여기서 포맷 가져옴
                 theaterSchedule.setSubDub(scheduleList.get(0).getSubDub());
                 theaterSchedule.setTotalSeat(theater.getTotalSeats());
 
@@ -125,11 +122,14 @@ public class ScheduleService {
 
                 List<String> startTimes = new ArrayList<>();
                 List<String> endTimes = new ArrayList<>();
+                List<Long> scheduleIds = new ArrayList<>();
+
                 int totalReserved = 0;
 
                 for (ScheduleEntity schedule : scheduleList) {
                     startTimes.add(schedule.getStartTime().toLocalTime().format(formatter));
                     endTimes.add(schedule.getEndTime().toLocalTime().format(formatter));
+                    scheduleIds.add(schedule.getScheduleId());  // ← 추가
 
                     Long reservedCount = reservedSeatMap.getOrDefault(schedule.getScheduleId(), 0L);
                     totalReserved += reservedCount.intValue();
@@ -137,6 +137,7 @@ public class ScheduleService {
 
                 theaterSchedule.setStartTimes(startTimes);
                 theaterSchedule.setEndTimes(endTimes);
+                theaterSchedule.setScheduleIds(scheduleIds);
                 theaterSchedule.setAvailSeat(theater.getTotalSeats() - totalReserved);
 
                 theaterSchedules.add(theaterSchedule);

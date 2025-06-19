@@ -25,8 +25,6 @@ public class ReservationService {
     @Autowired
     private ReservationSeatRepository reservationSeatRepository;
     @Autowired
-    private MovieRepository movieRepository;
-    @Autowired
     private UserRepository userRepository;
     @Autowired
     private ScheduleRepository scheduleRepository;
@@ -58,6 +56,7 @@ public class ReservationService {
         ticket.setPaymentStatus("PAID");
         ticket.setIssued(true);
         ticket.setMovie(schedule.getMovie());
+        ticket.setTheater(schedule.getTheater());
         ticketRepository.save(ticket);
 
         ReservationEntity reservation = new ReservationEntity();
@@ -66,6 +65,7 @@ public class ReservationService {
         reservation.setReservedAt(LocalDateTime.now());
         reservation.setTotalPrice(totalPrice);
         reservation.setPaymentMethod(request.getPaymentMethod());
+        reservation.setSchedule(schedule);
         reservationRepository.save(reservation);
 
         for (SeatEntity seat : seats) {
@@ -110,10 +110,7 @@ public class ReservationService {
             List<String> seatNumbers = reservationSeats.stream()
                     .map(rs -> rs.getSeat().getSeatNumber())
                     .toList();
-            String theaterName = reservationSeats.stream()
-                    .findFirst()
-                    .map(rs -> rs.getSeat().getTheater().getTheaterName())
-                    .orElse("미정");
+            String theaterName = ticket.getTheater().getTheaterName();
 
             return new ReservationDto(
                     res.getReservationId(),

@@ -39,11 +39,23 @@ public class MovieService {
             List<GenreEntity> genres = genreRepository.findAllById(dto.getGenreIds());
             entity.setGenres(genres);
         }
+        entity.setPosterPath(dto.getPosterPath());
 
         MovieEntity saved = movieRepository.save(entity);
 
-        dto.setMovieId(saved.getMovieId());
-        return dto;
+        return new MovieDto(
+                saved.getMovieId(),
+                saved.getTitle(),
+                saved.getRunningTime(),
+                saved.getReleaseDate(),
+                saved.getDirector(),
+                saved.getActors(),
+                saved.getGrade(),
+                saved.getFormats(),
+                saved.getGenres().stream().map(GenreEntity::getGenreId).toList(),
+                saved.getGenres().stream().map(GenreEntity::getGenreName).toList(),
+                saved.getPosterPath()
+        );
     }
 
     public List<MovieDto> getAllMovies() {
@@ -66,7 +78,8 @@ public class MovieService {
                     movie.getGrade(),
                     movie.getFormats(),
                     genreIds,
-                    genreNames
+                    genreNames,
+                    movie.getPosterPath()
             );
         }).collect(Collectors.toList());
     }
@@ -99,7 +112,8 @@ public class MovieService {
                     m.getGrade(),
                     m.getFormats(),
                     genreIds,
-                    genreNames
+                    genreNames,
+                    m.getPosterPath()
             );
         }).collect(Collectors.toList());
     }

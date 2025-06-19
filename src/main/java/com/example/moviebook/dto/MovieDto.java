@@ -21,4 +21,5 @@ public class MovieDto {
     private List<String> formats;
     private List<Long> genreIds; //등록용
     private List<String> genreNames; //조회용
+    private String posterPath;
 }

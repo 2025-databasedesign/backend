@@ -53,5 +53,8 @@ public class MovieEntity {
             inverseJoinColumns = @JoinColumn(name = "GENRE_ID")
     )
     private List<GenreEntity> genres = new ArrayList<>();
+
+    @Column(name = "POSTER_PATH", length = 500)
+    private String posterPath;
 }
 

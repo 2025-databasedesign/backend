@@ -25,13 +25,13 @@ public class ScheduleDto {
         @Schema(description = "영화 ID", example = "1")
         private Long movieId;
 
-        @Schema(description = "영화 제목", example = "Inception")
+        @Schema(hidden = true)
         private String movieName;
 
-        @Schema(description = "러닝타임 (분)", example = "148")
+        @Schema(hidden = true)
         private int durationMinutes;
 
-        @Schema(description = "등급 이미지", example = "/src/assets/grade_15.png")
+        @Schema(hidden = true)
         private String grade;
 
         private List<TheaterSchedule> theaters;
@@ -56,5 +56,8 @@ public class ScheduleDto {
 
         @Schema(description = "종료 시간 목록", example = "[\"10:28\", \"12:58\"]")
         private List<String> endTimes;
+
+        @Schema(description = "상영일정 ID 목록", example = "[101, 102]")
+        private List<Long> scheduleIds;
     }
 }

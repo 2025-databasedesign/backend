@@ -25,11 +25,15 @@ public class TheaterEntity {
     @Column(name = "TOTAL_SEATS")
     private int totalSeats;
 
-    @ElementCollection
-    @CollectionTable(name = "THEATER_SCREEN_TYPE", joinColumns = @JoinColumn(name = "THEATER_ID"))
-    @Column(name = "SCREEN_TYPE_NAME")
-    private List<String> screenTypes = new ArrayList<>();
+    // 상영 포맷 (예: "IMAX", "2D")
+    @Column(name = "FORMAT")
+    private String format;
 
-    @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL)
+    // 해당 포맷의 가격
+    @Column(name = "PRICE")
+    private int price;
+
+
+    @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SeatEntity> seats = new ArrayList<>();
 }

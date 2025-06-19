@@ -32,14 +32,15 @@ public class ScheduleEntity {
     @Column(name = "FORMAT")
     private String format; // 예: 2D, 3D, IMAX
 
-    @Column(name = "PRICE")
-    private int price;
-
     @Column(name = "SUB_DUB")
     private String subDub;
 
     @Transient
     public LocalDateTime getEndTime() {
         return this.startTime.plusMinutes(this.movie.getRunningTime());
+    }
+    @Transient
+    public int getPrice() {
+        return theater != null ? theater.getPrice() : 0;
     }
 }

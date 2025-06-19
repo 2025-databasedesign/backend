@@ -33,4 +33,8 @@ public class TicketEntity {
     @ManyToOne
     @JoinColumn(name = "MOVIE_ID")
     private MovieEntity movie;
+
+    @ManyToOne
+    @JoinColumn(name = "THEATER_ID")
+    private TheaterEntity theater;
 }

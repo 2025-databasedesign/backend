@@ -1,7 +1,6 @@
 package com.example.moviebook.controller;
 
 import com.example.moviebook.dto.TheaterDto;
-import com.example.moviebook.entity.TheaterEntity;
 import com.example.moviebook.service.TheaterService;
 import com.example.moviebook.util.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,7 @@ public class TheaterController {
 
     //모든 상영관 조회
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TheaterEntity>>> getAllTheaters() {
+    public ResponseEntity<ApiResponse<List<TheaterDto>>> getAllTheaters() {
         return ResponseEntity.ok(new ApiResponse<>(true, "모든 상영관 조회 성공", theaterService.getAllTheaters()));
     }
 

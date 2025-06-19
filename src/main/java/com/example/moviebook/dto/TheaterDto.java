@@ -12,5 +12,7 @@ public class TheaterDto {
     private Long theaterId;
     private String theaterName;
     private int totalSeats;
-    private List<String> screenTypes;
+    private String format;
+    private int price;
+    private List<SeatDto> seats;
 }
