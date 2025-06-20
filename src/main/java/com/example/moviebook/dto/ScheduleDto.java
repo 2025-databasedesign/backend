@@ -1,9 +1,9 @@
 package com.example.moviebook.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -59,5 +59,17 @@ public class ScheduleDto {
 
         @Schema(description = "상영일정 ID 목록", example = "[101, 102]")
         private List<Long> scheduleIds;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SimpleSchedule {
+        private Long scheduleId;
+        private String movieTitle;
+        private String theaterName;
+        private LocalDateTime startTime;
+        private String format;
+        private String subDub;
     }
 }

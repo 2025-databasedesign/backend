@@ -78,6 +78,125 @@ public class ScheduleService {
         return convertToDtoWithAvailableSeats(schedules, dateStr);
     }
 
+    public List<ScheduleDto.SimpleSchedule> getSchedulesByMovie(Long movieId) {
+        List<ScheduleEntity> schedules = scheduleRepository.findByMovie_MovieId(movieId);
+
+        return schedules.stream()
+                .map(this::convertToSimpleDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<ScheduleDto> updateSchedulesFrom(
+            Long baseScheduleId,
+            Long newMovieId,
+            Long newTheaterId,
+            LocalDateTime newStartTime,
+            String newSubDub
+    ) {
+        ScheduleEntity baseSchedule = scheduleRepository.findById(baseScheduleId)
+                .orElseThrow(() -> new IllegalArgumentException("기준 스케줄을 찾을 수 없습니다."));
+
+        MovieEntity newMovie = movieRepository.findById(newMovieId)
+                .orElseThrow(() -> new IllegalArgumentException("영화를 찾을 수 없습니다."));
+        TheaterEntity newTheater = theaterRepository.findById(newTheaterId)
+                .orElseThrow(() -> new IllegalArgumentException("상영관을 찾을 수 없습니다."));
+
+        LocalDate date = baseSchedule.getStartTime().toLocalDate();
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime startOfNextDay = date.plusDays(1).atStartOfDay();
+
+        // 상영관의 하루치 일정 모두 가져옴
+        List<ScheduleEntity> allSchedules = scheduleRepository.findByTheaterAndDate(
+                baseSchedule.getTheater().getTheaterId(), startOfDay, startOfNextDay
+        );
+
+        // 기준 시간 이전의 일정은 보존
+        List<ScheduleEntity> preservedSchedules = allSchedules.stream()
+                .filter(s -> s.getStartTime().isBefore(baseSchedule.getStartTime()))
+                .collect(Collectors.toList());
+
+        // 기준 시간 이후의 일정은 제거
+        List<ScheduleEntity> toDelete = allSchedules.stream()
+                .filter(s -> !s.getStartTime().isBefore(baseSchedule.getStartTime()))
+                .collect(Collectors.toList());
+
+        scheduleRepository.deleteAll(toDelete);
+
+        // 새로운 일정 생성 (기준 스케줄 기준으로 이후 시간들)
+        List<ScheduleEntity> newSchedules = new ArrayList<>();
+        LocalDateTime currentStart = newStartTime;
+        int runningTime = newMovie.getRunningTime();
+        int intervalMinutes = runningTime + 30;
+        LocalDateTime limitTime = date.atTime(23, 0);
+
+        while (currentStart.isBefore(limitTime)) {
+            ScheduleEntity s = new ScheduleEntity();
+            s.setMovie(newMovie);
+            s.setTheater(newTheater);
+            s.setStartTime(currentStart);
+            s.setSubDub(newSubDub);
+            s.setFormat(newTheater.getFormat());
+
+            newSchedules.add(s);
+            currentStart = currentStart.plusMinutes(intervalMinutes);
+        }
+
+        // 새로운 일정 저장
+        scheduleRepository.saveAll(newSchedules);
+
+        // 이전 일정과 새 일정 합침
+        List<ScheduleEntity> finalList = new ArrayList<>();
+        finalList.addAll(preservedSchedules);
+        finalList.addAll(newSchedules);
+
+        return finalList.stream()
+                .map(this::convertToDtoSimple)
+                .collect(Collectors.toList());
+    }
+
+    public void deleteSchedulesByMovie(Long movieId) {
+        List<ScheduleEntity> schedules = scheduleRepository.findByMovie_MovieId(movieId);
+        if (schedules.isEmpty()) {
+            throw new IllegalArgumentException("삭제할 스케줄이 없습니다.");
+        }
+
+        for (ScheduleEntity schedule : schedules) {
+            long count = reservationSeatRepository.countBySchedule(schedule);
+            if (count > 0) {
+                throw new IllegalStateException("예약이 존재하는 스케줄은 삭제할 수 없습니다.");
+            }
+        }
+
+        scheduleRepository.deleteAll(schedules);
+    }
+
+    private ScheduleDto convertToDtoSimple(ScheduleEntity schedule) {
+        ScheduleDto dto = new ScheduleDto();
+        dto.setDate(schedule.getStartTime().toLocalDate().toString());
+
+        ScheduleDto.MovieSchedule movieSchedule = new ScheduleDto.MovieSchedule();
+        movieSchedule.setMovieId(schedule.getMovie().getMovieId());
+        movieSchedule.setMovieName(schedule.getMovie().getTitle());
+        movieSchedule.setDurationMinutes(schedule.getMovie().getRunningTime());
+        movieSchedule.setGrade(schedule.getMovie().getGrade());
+
+        ScheduleDto.TheaterSchedule theaterSchedule = new ScheduleDto.TheaterSchedule();
+        theaterSchedule.setTheaterId(String.valueOf(schedule.getTheater().getTheaterId()));
+        theaterSchedule.setTheaterName(schedule.getTheater().getTheaterName());
+        theaterSchedule.setFormat(schedule.getFormat());
+        theaterSchedule.setSubDub(schedule.getSubDub());
+        theaterSchedule.setStartTimes(List.of(schedule.getStartTime().toLocalTime().toString()));
+        theaterSchedule.setEndTimes(List.of(schedule.getEndTime().toLocalTime().toString()));
+        theaterSchedule.setScheduleIds(List.of(schedule.getScheduleId()));
+        theaterSchedule.setTotalSeat(schedule.getTheater().getTotalSeats());
+        theaterSchedule.setAvailSeat(schedule.getTheater().getTotalSeats()); // 예매 정보 미포함 버전
+
+        movieSchedule.setTheaters(List.of(theaterSchedule));
+        dto.setSchedules(List.of(movieSchedule));
+
+        return dto;
+    }
+
     private ScheduleDto convertToDtoWithAvailableSeats(List<ScheduleEntity> scheduleEntities, String date) {
         ScheduleDto dto = new ScheduleDto();
         dto.setDate(date);
@@ -148,6 +267,17 @@ public class ScheduleService {
         }
 
         dto.setSchedules(movieSchedules);
+        return dto;
+    }
+
+    private ScheduleDto.SimpleSchedule convertToSimpleDto(ScheduleEntity entity) {
+        ScheduleDto.SimpleSchedule dto = new ScheduleDto.SimpleSchedule();
+        dto.setScheduleId(entity.getScheduleId());
+        dto.setMovieTitle(entity.getMovie().getTitle());
+        dto.setTheaterName(entity.getTheater().getTheaterName());
+        dto.setStartTime(entity.getStartTime());
+        dto.setFormat(entity.getFormat());
+        dto.setSubDub(entity.getSubDub());
         return dto;
     }
 }

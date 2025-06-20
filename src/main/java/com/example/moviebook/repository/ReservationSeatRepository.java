@@ -24,4 +24,5 @@ public interface ReservationSeatRepository extends JpaRepository<ReservationSeat
             "WHERE r.schedule IN :schedules GROUP BY r.schedule.scheduleId")
     List<Object[]> countReservedSeatsGrouped(@Param("schedules") List<ScheduleEntity> schedules);
 
+
 }

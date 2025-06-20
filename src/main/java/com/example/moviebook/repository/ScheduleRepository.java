@@ -17,4 +17,17 @@ public interface ScheduleRepository extends JpaRepository<ScheduleEntity, Long> 
     List<ScheduleEntity> findByStartTimeBetween(
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    @Query("""
+        SELECT s FROM ScheduleEntity s
+        WHERE s.theater.theaterId = :theaterId
+          AND s.startTime >= :startOfDay AND s.startTime < :startOfNextDay
+        ORDER BY s.startTime
+    """)
+    List<ScheduleEntity> findByTheaterAndDate(
+            @Param("theaterId") Long theaterId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("startOfNextDay") LocalDateTime startOfNextDay);
+
+    List<ScheduleEntity> findByMovie_MovieId(Long movieId);
 }
