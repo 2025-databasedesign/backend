@@ -32,18 +32,21 @@ public class TheaterAdminController {
         TheaterEntity theater = theaterRepository.findById(theaterId)
                 .orElseThrow(() -> new IllegalArgumentException("상영관이 존재하지 않습니다."));
 
-        int[][] layout = request.getLayout();
+        List<List<Integer>> layout = request.getLayout();
 
-        for (int row = 0; row < layout.length; row++) {
-            for (int col = 0; col < layout[row].length; col++) {
-                if (layout[row][col] == 1) {
+        for (int row = 0; row < layout.size(); row++) {
+            int seatColCount = 0; // 좌석이 실제로 생성된 열 순서 (좌석명에 사용)
+            for (int col = 0; col < layout.get(row).size(); col++) {
+                Integer value = layout.get(row).get(col);
+                if (value != null && value.intValue() == 1) {
                     SeatEntity seat = new SeatEntity();
                     seat.setRowNo(row);
                     seat.setColNo(col);
-                    seat.setSeatNumber(generateSeatNumber(row, col));
+                    seat.setSeatNumber(generateSeatNumber(row, seatColCount)); // 이걸로 변경!
                     seat.setStatus("AVAILABLE");
                     seat.setTheater(theater);
                     seatRepository.save(seat);
+                    seatColCount++; // 좌석이 있을 때만 증가
                 }
             }
         }

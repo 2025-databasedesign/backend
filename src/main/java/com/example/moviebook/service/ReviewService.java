@@ -26,11 +26,11 @@ public class ReviewService {
                 dto.getTargetType().name(), // enum → 문자열
                 dto.getTargetId()
         );
-
+/*
         if (!hasReservation) {
             throw new IllegalArgumentException("해당 대상에 대해 예매한 사용자만 리뷰를 작성할 수 있습니다.");
         }
-
+*/
         ReviewEntity review = ReviewEntity.builder()
                 .content(dto.getContent())
                 .rating(dto.getRating())

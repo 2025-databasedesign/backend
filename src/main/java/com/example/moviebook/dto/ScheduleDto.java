@@ -51,13 +51,11 @@ public class ScheduleDto {
         private int availSeat;
         private int totalSeat;
 
-        @Schema(description = "시작 시간 목록", example = "[\"08:00\", \"10:30\"]")
+        @Schema(description = "시작 시간 목록", example = "[\"08:00\"]")
         private List<String> startTimes;
 
-        @Schema(description = "종료 시간 목록", example = "[\"10:28\", \"12:58\"]")
         private List<String> endTimes;
 
-        @Schema(description = "상영일정 ID 목록", example = "[101, 102]")
         private List<Long> scheduleIds;
     }
 
