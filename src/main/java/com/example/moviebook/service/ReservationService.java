@@ -3,9 +3,11 @@ package com.example.moviebook.service;
 import com.example.moviebook.dto.ReservationDto;
 import com.example.moviebook.entity.*;
 import com.example.moviebook.repository.*;
+import com.example.moviebook.util.UserStatus;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.time.LocalDateTime;
@@ -36,6 +38,9 @@ public class ReservationService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보가 없습니다."));
 
+        if (user.getStatus() == UserStatus.BANNED) {
+            throw new AccessDeniedException("접근이 제한된 사용자입니다.");
+        }
         ScheduleEntity schedule = scheduleRepository.findById(request.getScheduleId())
                 .orElseThrow(() -> new IllegalArgumentException("상영 정보를 찾을 수 없습니다."));
 

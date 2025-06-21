@@ -4,7 +4,9 @@ import com.example.moviebook.dto.UserDto;
 import com.example.moviebook.entity.UserEntity;
 import com.example.moviebook.repository.UserRepository;
 import com.example.moviebook.security.JwtTokenProvider;
+import com.example.moviebook.util.UserStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -99,7 +101,7 @@ public class UserService {
         response.put("token", token);
         response.put("exprTime", "3600"); // 1시간
         response.put("name", user.getName());
-
+        response.put("status", user.getStatus());
         return response;
     }
 
@@ -180,12 +182,16 @@ public class UserService {
 
     // 돈 충전
     public void chargeMoney(String email, int amount) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getStatus() == UserStatus.BANNED) {
+            throw new AccessDeniedException("접근이 제한된 사용자입니다.");
+        }
+
         if (amount <= 0) {
             throw new IllegalArgumentException("충전 금액은 0보다 커야 합니다.");
         }
-
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         user.setMoney(user.getMoney() + amount);
         userRepository.save(user);
