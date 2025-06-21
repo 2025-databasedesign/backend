@@ -1,5 +1,6 @@
 package com.example.moviebook.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -52,6 +53,7 @@ public class MovieEntity {
             joinColumns = @JoinColumn(name = "MOVIE_ID"),
             inverseJoinColumns = @JoinColumn(name = "GENRE_ID")
     )
+    @JsonBackReference
     private List<GenreEntity> genres = new ArrayList<>();
 
     @Column(name = "POSTER_PATH", length = 500)

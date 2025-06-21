@@ -25,7 +25,7 @@ public class GenreController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<GenreEntity>>> getAllGenres() {
+    public ResponseEntity<ApiResponse<List<GenreDto>>> getAllGenres() {
         return ResponseEntity.ok(new ApiResponse<>(true, "장르 목록 조회", genreService.getAllGenres()));
     }
 }

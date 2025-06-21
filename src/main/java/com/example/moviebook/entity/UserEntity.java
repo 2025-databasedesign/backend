@@ -21,6 +21,7 @@ public class UserEntity {
     private String gender;
     private String birthDate;
     private String phone;
+    private int money;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

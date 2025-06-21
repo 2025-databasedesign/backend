@@ -18,4 +18,5 @@ public class UserDto {
     private String gender;
     private String birthDate;
     private String phone;
+    private int money;
 }

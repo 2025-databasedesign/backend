@@ -50,6 +50,15 @@ public class ReservationService {
 
         int totalPrice = schedule.getPrice() * seats.size();
 
+
+        //사용자 돈 차감
+        if (user.getMoney() < totalPrice) {
+            throw new IllegalStateException("잔액이 부족합니다.");
+        }
+
+        user.setMoney(user.getMoney() - totalPrice);
+        userRepository.save(user);
+
         TicketEntity ticket = new TicketEntity();
         ticket.setBookedAt(LocalDateTime.now());
         ticket.setPrice(totalPrice);
@@ -112,6 +121,7 @@ public class ReservationService {
                     .toList();
             String theaterName = ticket.getTheater().getTheaterName();
 
+
             return new ReservationDto(
                     res.getReservationId(),
                     reservationSeats.get(0).getSchedule().getScheduleId(),
@@ -142,8 +152,23 @@ public class ReservationService {
         List<ReservationSeatEntity> oldSeats = reservationSeatRepository.findByReservation(reservation);
         reservationSeatRepository.deleteAll(oldSeats);
 
+        UserEntity user = reservation.getUser();
+        user.setMoney(user.getMoney() + reservation.getTotalPrice()); // 기존 금액 환불
+
         List<SeatEntity> newSeats = seatRepository.findBySeatNumberInAndTheater_TheaterId(
                 request.getSeatNumbers(), oldSeats.get(0).getSeat().getTheater().getTheaterId());
+
+        int newTotalPrice = oldSeats.get(0).getSchedule().getPrice() * newSeats.size();
+
+        if (user.getMoney() < newTotalPrice) {
+            throw new IllegalStateException("잔액이 부족합니다.");
+        }
+
+        user.setMoney(user.getMoney() - newTotalPrice);
+        userRepository.save(user);
+
+        reservation.setTotalPrice(newTotalPrice);
+        reservationRepository.save(reservation);
 
         for (SeatEntity seat : newSeats) {
             if (reservationSeatRepository.existsByScheduleAndSeat(oldSeats.get(0).getSchedule(), seat)) {

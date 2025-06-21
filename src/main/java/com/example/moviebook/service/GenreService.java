@@ -26,11 +26,19 @@ public class GenreService {
         GenreEntity savedGenre = genreRepository.save(genre);
         return new GenreDto(
                 savedGenre.getGenreId(),
-                savedGenre.getGenreName());
+                savedGenre.getGenreName(),
+                null);
     }
-    
-    // 장르 조회
-    public List<GenreEntity> getAllGenres() {
-        return genreRepository.findAll();
+
+    public List<GenreDto> getAllGenres() {
+        return genreRepository.findAll().stream()
+                .map(genre -> new GenreDto(
+                        genre.getGenreId(),
+                        genre.getGenreName(),
+                        genre.getMovies().stream()
+                                .map(movie -> new GenreDto.MovieTitleDto(movie.getMovieId(), movie.getTitle()))
+                                .toList()
+                ))
+                .toList();
     }
 }

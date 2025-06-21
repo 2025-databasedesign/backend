@@ -62,7 +62,9 @@ public class UserService {
                 savedUser.getPassword(),
                 savedUser.getGender(),
                 savedUser.getBirthDate(),
-                savedUser.getPhone());
+                savedUser.getPhone(),
+                0
+        );
     }
 
     // 로그인
@@ -112,7 +114,8 @@ public class UserService {
                 null,
                 user.getGender(),
                 user.getBirthDate(),
-                user.getPhone()
+                user.getPhone(),
+                user.getMoney()
         );
     }
 
@@ -141,7 +144,8 @@ public class UserService {
                 null,
                 updatedUser.getGender(),
                 updatedUser.getBirthDate(),
-                updatedUser.getPhone()
+                updatedUser.getPhone(),
+                updatedUser.getMoney()
         );
     }
 
@@ -174,4 +178,16 @@ public class UserService {
         userRepository.delete(user);
     }
 
+    // 돈 충전
+    public void chargeMoney(String email, int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("충전 금액은 0보다 커야 합니다.");
+        }
+
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        user.setMoney(user.getMoney() + amount);
+        userRepository.save(user);
+    }
 }

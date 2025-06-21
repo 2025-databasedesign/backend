@@ -101,4 +101,18 @@ public class UserController {
             return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
         }
     }
+
+    //금액 충전
+    @PostMapping("/{email}/charge")
+    public ResponseEntity<ApiResponse<Void>> chargeUserMoney(
+            @PathVariable String email,
+            @RequestParam int amount
+    ) {
+        try {
+            userService.chargeMoney(email, amount);
+            return ResponseEntity.ok(new ApiResponse<>(true, "충전이 완료되었습니다.", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
+        }
+    }
 }
