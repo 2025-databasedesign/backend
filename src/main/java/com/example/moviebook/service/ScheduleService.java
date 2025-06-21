@@ -55,7 +55,10 @@ public class ScheduleService {
                 while (currentStart.isBefore(limitTime)) {
                     ScheduleEntity schedule = new ScheduleEntity();
                     schedule.setMovie(movie);
-                    schedule.setFormat(theaterDto.getFormat());
+                    String format = (theaterDto.getFormat() == null || theaterDto.getFormat().isBlank())
+                            ? theater.getFormat()
+                            : theaterDto.getFormat();
+                    schedule.setFormat(format);
                     schedule.setTheater(theater);
                     schedule.setStartTime(currentStart);
                     schedule.setSubDub(theaterDto.getSubDub());  // 자막/더빙은 회차마다 다를 수 있음

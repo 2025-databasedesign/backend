@@ -2,7 +2,6 @@
 package com.example.moviebook.controller;
 
 import com.example.moviebook.dto.GenreDto;
-import com.example.moviebook.entity.GenreEntity;
 import com.example.moviebook.service.GenreService;
 import com.example.moviebook.util.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
