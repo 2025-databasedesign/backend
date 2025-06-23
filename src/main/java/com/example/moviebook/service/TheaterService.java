@@ -65,6 +65,28 @@ public class TheaterService {
         );
     }
 
+    // 1. 상영관 수정
+    public TheaterDto updateTheater(Long id, TheaterDto dto) {
+        TheaterEntity entity = theaterRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("상영관을 찾을 수 없습니다."));
+
+        entity.setTheaterName(dto.getTheaterName());
+        entity.setTotalSeats(dto.getTotalSeats());
+        entity.setFormat(dto.getFormat());
+        entity.setPrice(dto.getPrice());
+
+        TheaterEntity updated = theaterRepository.save(entity);
+
+        return convertToDto(updated);
+    }
+
+    // 2. 상영관 삭제
+    public void deleteTheater(Long id) {
+        TheaterEntity entity = theaterRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("상영관을 찾을 수 없습니다."));
+        theaterRepository.delete(entity);
+    }
+
     private SeatDto convertSeatToDto(SeatEntity seat) {
         SeatDto dto = new SeatDto();
         dto.setSeatId(seat.getSeatId());
@@ -74,4 +96,6 @@ public class TheaterService {
         dto.setStatus(seat.getStatus());
         return dto;
     }
+
+
 }

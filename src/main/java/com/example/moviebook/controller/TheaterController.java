@@ -34,4 +34,17 @@ public class TheaterController {
         TheaterDto theater = theaterService.getTheaterById(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "상영관 조회 성공", theater));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<TheaterDto>> updateTheater(@PathVariable Long id, @RequestBody TheaterDto dto) {
+        TheaterDto updated = theaterService.updateTheater(id, dto);
+        return ResponseEntity.ok(new ApiResponse<>(true, "상영관 수정 완료", updated));
+    }
+
+    // 상영관 삭제
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTheater(@PathVariable Long id) {
+        theaterService.deleteTheater(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "상영관 삭제 완료", null));
+    }
 }
