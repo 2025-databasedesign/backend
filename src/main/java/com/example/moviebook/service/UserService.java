@@ -121,6 +121,13 @@ public class UserService {
         );
     }
 
+    // id로 사용자 이메일 조회
+    public String getUserEmailById(Long id) {
+        UserEntity user = userRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("해당 ID의 사용자를 찾을 수 없습니다."));
+        return user.getEmail();
+    }
+
     // 이메일로 사용자 정보 업데이트
     public UserDto updateUserByEmail(String email, UserDto userDto) {
         UserEntity user = userRepository.findByEmail(email)
