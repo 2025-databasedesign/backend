@@ -62,6 +62,17 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>(true, "사용자 조회 성공", user));
     }
 
+    // 사용자 정보 조회 (이메일로)
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<String>> getUserEmailById(@PathVariable Long id) {
+        try {
+            String email = userService.getUserEmailById(id);
+            return ResponseEntity.ok(new ApiResponse<>(true, "이메일 조회 성공", email));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(false, e.getMessage(), null));
+        }
+    }
+
     // 사용자 정보 업데이트 (이메일로)
     @PutMapping("/{email}")
     public ResponseEntity<ApiResponse<UserDto>> updateUserByEmail(@PathVariable String email, @RequestBody UserDto userDto) {
