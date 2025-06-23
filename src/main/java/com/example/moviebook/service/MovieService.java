@@ -84,6 +84,12 @@ public class MovieService {
         }).collect(Collectors.toList());
     }
 
+    public String getPosterPathByTitle(String title) {
+        return movieRepository.findByTitle(title)
+                .map(MovieEntity::getPosterPath)
+                .orElseThrow(() -> new IllegalArgumentException("해당 제목의 영화가 없습니다: " + title));
+    }
+
     public void deleteMovie(Long id) {
         movieRepository.deleteById(id);
     }
