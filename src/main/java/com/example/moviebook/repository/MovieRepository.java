@@ -16,4 +16,7 @@ public interface MovieRepository extends JpaRepository<MovieEntity, Long> {
 
     @Query("SELECT DISTINCT m.grade FROM MovieEntity m WHERE m.grade IS NOT NULL")
     List<String> findDistinctGrades();
+
+    @Query("SELECT m.posterPath FROM MovieEntity m WHERE m.title = :title")
+    String findPosterPathByTitle(String title);
 }
