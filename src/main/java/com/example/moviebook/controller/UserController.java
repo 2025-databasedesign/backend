@@ -62,8 +62,8 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>(true, "사용자 조회 성공", user));
     }
 
-    // 사용자 정보 조회 (이메일로)
-    @GetMapping("/{id}")
+    // 사용자 정보 조회 (id로)
+    @GetMapping("/id/{id}")
     public ResponseEntity<ApiResponse<String>> getUserEmailById(@PathVariable Long id) {
         try {
             String email = userService.getUserEmailById(id);
