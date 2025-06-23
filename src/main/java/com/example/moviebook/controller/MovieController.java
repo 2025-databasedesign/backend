@@ -27,6 +27,14 @@ public class MovieController {
         return ResponseEntity.ok(new ApiResponse<>(true, "전체 영화 조회", movieService.getAllMovies()));
     }
 
+    @GetMapping("/posterPath")
+    public ResponseEntity<ApiResponse<String>> getPosterPathByTitle(
+            @RequestParam String title
+    ) {
+        String path = movieService.getPosterPathByTitle(title);
+        return ResponseEntity.ok(new ApiResponse<>(true, "포스터 경로 조회 성공", path));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteMovie(@PathVariable Long id) {
         movieService.deleteMovie(id);
