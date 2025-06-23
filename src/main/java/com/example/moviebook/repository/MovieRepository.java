@@ -20,4 +20,6 @@ public interface MovieRepository extends JpaRepository<MovieEntity, Long> {
 
     @Query("SELECT m.posterPath FROM MovieEntity m WHERE m.title = :title")
     String findPosterPathByTitle(@Param("title") String title);
+
+    Optional<MovieEntity> findByTitle(String title);
 }
